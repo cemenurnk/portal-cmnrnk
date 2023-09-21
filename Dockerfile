@@ -1,16 +1,12 @@
-FROM mhart/alpine-node:12 AS builder
-
+FROM node:18-alpine3.17 as build
 WORKDIR /app
+COPY . /app
+RUN npm install
+RUN npm run build
 
-COPY . .
-
-RUN yarn install
-RUN yarn run build
-
-FROM nginx:1.16.0-alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-
+FROM ubuntu
+RUN apt-get update
+RUN apt-get install nginx -y
+COPY --from=build /app/dist /var/www/html/
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx","-g","daemon off;"]
