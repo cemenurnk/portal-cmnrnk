@@ -9,12 +9,13 @@ import { formatDate } from "../helpers/date"
 import Loader from "../components/Loader"
 
 import http from "../helpers/http"
+import ErrorMessage from "../components/ErrorMessage"
 
 const templatePatient = {
   sysmedi02_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-  syspers01_nombre: "Iván",
-  syspers01_apellido: "Vazquez",
-  syspers01_dni: "44558441"
+  syspers01_nombre: "Jane",
+  syspers01_apellido: "Doe",
+  syspers01_dni: "30336001 "
 }
 
 const templateModalities = [
@@ -52,7 +53,7 @@ const templateStudies = [
     sysmedi14_study_date: "2023-06-23 14:50:22"
   }, 
 ]
-
+ 
 const initialFilters = {
     dateFrom: "",
     dateTo: "",
@@ -72,6 +73,7 @@ const Studies = () => {
   const [filteredStudies, setFilteredStudies] = useState([])
 
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(false);
 
   const handleClickFilters = () => setShowDropdown(prev => !prev)
 
@@ -157,36 +159,48 @@ const Studies = () => {
     setFilteredStudies(filteredStudiesLocal)
   }
 
+  const getStudies = async () => {
+    try{
+      const responseStudies = await http.get('/sys_medi_10/get_estudios.php?sysmedi02_uuid=1')
+
+      console.log("respuesta => ", responseStudies)
+
+      if(responseStudies.status === "error"){
+        setError(true)
+        return
+      }
+      
+      setFilteredStudies(responseStudies.studies)
+    }catch(error){
+      console.log(error)
+    }
+  }
+
+  const getModalities = async () => {
+    try{
+
+      const responseModalities = await http.get('/sys_medi_09/get_modalidades.php')
+
+      if(responseModalities.status === "error"){
+        
+        return
+      }
+      
+      setModalities(responseModalities.modalities)
+
+    }catch(error){
+      console.log(error)
+    }
+  }
+
   useEffect(()=>{
     //fetching
 
-    // const responseStudies = await http.get('/sys_medi_10/get_estudios.php')
-    
-    // if(responseStudies.status === "error"){
+    getStudies()
+    //getModalities()
 
-    //   return
-    // }
-    
-    // setFilteredStudies(responseStudies.studies)
-    
-    // const responseModalities = await http.get('/sys_medi_09/get_modalidades.php')
-    
-    // if(responseModalities.status === "error"){
-      
-    //   return
-    // }
-    
+    setLoading(false)
 
-    //setLoading(false)
-
-
-    setTimeout(()=>{
-      setLoading(false)
-      setModalities(templateModalities)
-      setStudies(templateStudies)
-      setFilteredStudies(templateStudies)
-      setPatient(templatePatient)
-    }, 500)
   }, [])
 
   useEffect(()=>{
@@ -209,47 +223,12 @@ const Studies = () => {
             </div>
           </div>
         }
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex flex-col md:flex-row">
-            <p className="text-xl font-bold">{filtersText}</p>
-            {
-              filtersText !== "Todos" && 
-              <span className="flex items-center text-red-500 text-xl font-bold hover:text-sky-500 cursor-pointer" onClick={clearFilters}>
-                <IoMdTrash className="text-xl"/>
-                Limpiar
-              </span>
-            }
+        {error && (
+          <div className="flex flex-col justify-center items-center mt-20">
+            <ErrorMessage />
           </div>
-          <span className="text-xl font-bold hover:text-sky-500 cursor-pointer flex items-center gap-1 self-end" onClick={handleClickFilters}>
-            Filtros
-            <IoMdFunnel/>
-          </span>
-        </div>
-        <Dropdown show={showDropdown} setShow={setShowDropdown}>
-          <div className="flex flex-col gap-2">
-            <p className="text-center font-bold">Fecha del estudio</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Input name="dateFrom" id="dateFrom" type="date" label="Desde" onChange={handleChangeDates} value={filters.dateFrom}/>
-              <Input name="dateTo" id="dateTo" type="date" label="Hasta" onChange={handleChangeDates} value={filters.dateTo}/>
-            </div>
-            <p className="text-center font-bold">Modalidades</p>
-            <div className="grid grid-cols-2">
-              {
-                modalities.map((modality, index) => 
-                <Check 
-                  key={index} 
-                  name={modality.sysmedi09_codigo} 
-                  id={modality.sysmedi09_codigo} 
-                  label={modality.sysmedi09_descripcion} 
-                  onChange={handleChangeModality}
-                  checked={filters.modalities.includes(modality.sysmedi09_codigo)}
-                />)
-              }
-            </div>
-          </div>
-        </Dropdown>
-        {
-          loading && (
+        )}
+        {loading && (
             <div className="flex flex-col justify-center items-center mt-20">
               <Loader color="dark" size={50}/>
             </div>
@@ -257,16 +236,58 @@ const Studies = () => {
         }
         {
           !loading && filteredStudies.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {filteredStudies.map((study, index) => <StudyCard key={index} {...study} />)}
-            </div>
+            <>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col md:flex-row">
+                  <p className="text-xl font-bold">{filtersText}</p>
+                  {
+                    filtersText !== "Todos" && 
+                    <span className="flex items-center text-red-500 text-xl font-bold hover:text-sky-500 cursor-pointer" onClick={clearFilters}>
+                      <IoMdTrash className="text-xl"/>
+                      Limpiar
+                    </span>
+                  }
+                </div>
+                <span className="text-xl font-bold hover:text-sky-500 cursor-pointer flex items-center gap-1 self-end" onClick={handleClickFilters}>
+                  Filtros
+                  <IoMdFunnel/>
+                </span>
+              </div>
+              <Dropdown show={showDropdown} setShow={setShowDropdown}>
+                <div className="flex flex-col gap-2">
+                  <p className="text-center font-bold">Fecha del estudio</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input name="dateFrom" id="dateFrom" type="date" label="Desde" onChange={handleChangeDates} value={filters.dateFrom}/>
+                    <Input name="dateTo" id="dateTo" type="date" label="Hasta" onChange={handleChangeDates} value={filters.dateTo}/>
+                  </div>
+                  <p className="text-center font-bold">Modalidades</p>
+                  <div className="grid grid-cols-2">
+                    {
+                      modalities.map((modality, index) => 
+                      <Check 
+                        key={index} 
+                        name={modality.sysmedi09_codigo} 
+                        id={modality.sysmedi09_codigo} 
+                        label={modality.sysmedi09_descripcion} 
+                        onChange={handleChangeModality}
+                        checked={filters.modalities.includes(modality.sysmedi09_codigo)}
+                      />)
+                    }
+                  </div>
+                </div>
+              </Dropdown>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {filteredStudies.map((study, index) => <StudyCard key={index} {...study} />)}
+              </div>
+            </>
           )
         }
         {
-          !loading && filteredStudies.length < 1 && (
+          !loading && !error && filteredStudies.length < 1 && (
             <div className="flex flex-col justify-center items-center mt-20">
               <IoIosSearch className="text-7xl font-bold"/>
-              <p className="text-lg font-bold">No se encontraron estudios</p>
+              <p className="text-lg font-bold">No se encontraron estudios.</p>
+              <p className="text-lg font-bold">Consulte con el administrador.</p>
             </div>
           )
         }

@@ -67,12 +67,11 @@
 {
   status: "success",
   sysmedi09_descripcion: "Mamografía",
-  sysmedi09_codigo: "MG",
-  sysmedi10_fapl: "2023-09-05 12:28:16",
-  sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
   sysmedi14_study_date: "2023-08-23 14:50:22",
-  sysmedi14_instances: "4",
-  sysmedi10_medico_responsable: "Fernando Trachta",
+  sysmedi07_descripcion: "Mamógrafo GE",
+  sysmedi10_medico_responsable: "Trachta, Fernando",
+  sysmedi10_medico_derivante: "Albornoz, Gabriela",
+  sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
   sysmedi14_ui: "1.2.840.113619.2.401.148692532694329114042299683197554365165"
 }
 ~~~
