@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
-import { IoMdDownload, IoMdSearch, IoMdShare } from "react-icons/io";
+import { useState, useEffect, useContext } from 'react'
+import { IoMdDownload, IoMdSearch, IoMdShare, IoMdCopy } from "react-icons/io";
 import Navbar from "../components/Navbar"
 import { formatDateTime } from '../helpers/date';
+
 import Loader from '../components/Loader';
-import ErrorMessage from '../components/ErrorMessage';
+import Alert from '../components/Alert'
+import { SessionContext } from '../context/SessionContext';
 
 const ExternalLinkButton = ({children, text, href}) => {
   return(
@@ -20,25 +22,41 @@ const ExternalLinkButton = ({children, text, href}) => {
   )
 }
 
-const studyObj = {
-  sysmedi10_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-  sysmedi09_descripcion: "Mamografía",
-  sysmedi09_codigo: "MG",
-  sysmedi10_fapl: "2023-09-05 12:28:16",
-  sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
-  sysmedi14_study_date: "2023-08-23 14:50:22",
-  sysmedi14_instances: "4",
-  sysmedi10_medico_responsable: "Fernando Trachta",
-  sysmedi10_medico_derivante: "Gabriela Albornoz",
-  sysmedi07_descripcion: "Mamógrafo GE",
-  sysmedi14_ui: "1.2.840.113619.2.401.148692532694329114042299683197554365165"
+const LinkListItem = ({title, link}) => {
+
+  const { setAlert } = useContext(SessionContext)
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    setAlert({text: "Copiado en portapapeles.", type: "success"})
+    setTimeout(()=> setAlert(null), 5000)
+  }
+
+  return (
+    <li className='flex flex-row bg-gray-100 p-2 rounded gap-2 justify-between items-center'>
+      <p className='mb-2 truncate'>{title}</p>
+      <div className='flex gap-2'>
+        <a href={link} target='_blank' className='bg-sky-500 text-white p-1 rounded flex items-center'>
+          <IoMdSearch className='text-3xl text-white'/>
+        </a>
+        <button 
+          type="button" 
+          className='bg-sky-500 text-white font-bold p-1 rounded flex items-center'
+          onClick={() => copyToClipboard(link)}
+        >
+          <IoMdCopy className='text-3xl text-white'/>
+        </button>
+      </div>
+    </li>
+  )
+
 }
 
 const StudyDetail = () => {
 
-  const [study, setStudy]     = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState(true)
+  const { session: { loading, sysMedi10Selected }} = useContext(SessionContext)
+
+  const [alert, setAlert] = useState(null)
 
   return (
     <>
@@ -49,53 +67,81 @@ const StudyDetail = () => {
               <Loader color='black' size={50}/>
             </div> 
           }
-          {error &&
-            <div className='flex justify-center items-center min-h-screen'>
-              <ErrorMessage />
+          {alert && 
+            <div className=''>
             </div>
           }
-          {study &&
+          {sysMedi10Selected &&
             <div className='pt-20'>
-              <div className='flex flex-col gap-4'>
-                <p className='text-4xl font-bold'>{study.sysmedi09_descripcion}</p>
+              <div className='flex flex-col gap-5'>
+                <p className='text-4xl font-bold'>{sysMedi10Selected.sysMedi09Descripcion}</p>
                 <div>
                   <p className='text-base text-sky-500 mb-0'>Fecha y Hora</p>
-                  <p className='text-2xl'>{formatDateTime(study.sysmedi14_study_date)}</p>
+                  <p className='text-xl'>{formatDateTime(sysMedi10Selected.sysMedi10Fecha)}</p>
                 </div>
-                <div>
+                {/* <div>
                   <p className='text-base text-sky-500 mb-0'>Máquina Empleada</p>
-                  <p className='text-2xl'>{study.sysmedi07_descripcion}</p>
-                </div>
+                  <p className='text-2xl'>{sysMedi10Selected.sysmedi07_descripcion}</p>
+                </div> */}
                 <div>
                   <p className='text-base text-sky-500 mb-0'>Médico Responsable</p>
-                  <p className='text-2xl'>{study.sysmedi10_medico_responsable}</p>
+                  <p className='text-xl'>{sysMedi10Selected.sysMedi08Responsable}</p>
                 </div>
-                <div>
+                {/* <div>
                   <p className='text-base text-sky-500 mb-0'>Médico Derivante</p>
-                  <p className='text-2xl'>{study.sysmedi10_medico_derivante}</p>
+                  <p className='text-2xl'>{sysMedi10Selected.sysmedi10_medico_derivante}</p>
+                </div> */}
+                {/* <div>
+                  <p className='text-base text-sky-500 mb-0'>Descripción</p>
+                  <p className='text-2xl'>{sysMedi10Selected.sysmedi10_descripcion}</p>
+                </div> */}
+                <div>
+                  <p className='text-base text-sky-500 mb-0'>Informes</p>
+                  <ul className='flex flex-col gap-2'>
+                    {
+                      sysMedi10Selected.sysMedi11List.map((sysMedi11, index) => (
+                        <LinkListItem 
+                          key={index} 
+                          title={sysMedi11.sysMedi11Titulo} 
+                          link={sysMedi11.sysMedi11Enlace}
+                          setAlert={setAlert}
+                          />))
+                        }
+                  </ul>
                 </div>
                 <div>
-                  <p className='text-base text-sky-500 mb-0'>Descripción</p>
-                  <p className='text-2xl'>{study.sysmedi10_descripcion}</p>
+                  <p className='text-base text-sky-500 mb-0'>Imágenes</p>
+                  <ul className='flex flex-col gap-2'>
+                    {
+                      sysMedi10Selected.sysMedi16List.map((sysMedi16, index) => (
+                        <LinkListItem 
+                        key={index} 
+                        title={`${sysMedi16.sysMedi15Descripcion} - ${formatDateTime(sysMedi16.sysMedi14StudyDate)}`} 
+                        link={sysMedi16.sysMedi16Enlace}
+                        setAlert={setAlert}
+                        />))
+                      }
+                  </ul>
                 </div>
+                <Alert />
               </div>
-              <div className='grid grid-cols-3 mt-10'>
+              {/* <div className='grid grid-cols-3 mt-10'>
                 <ExternalLinkButton 
-                  text="Descargar Informe"
-                  href={`https://desasievert.cemenurnk.org.ar/modulos/sys_medi_10/php/ver_sys_medi_11_pdf.php?id=5&idMod=524`}
+                text="Descargar Informe"
+                href={`https://desasievert.cemenurnk.org.ar/modulos/sys_medi_10/php/ver_sys_medi_11_pdf.php?id=5&idMod=524`}
                 >
-                  <IoMdDownload className='text-3xl text-white'/>  
+                <IoMdDownload className='text-3xl text-white'/>  
                 </ExternalLinkButton>  
                 <ExternalLinkButton 
-                  text="Ver Estudio"
-                  href={`https://portal.cemenurnk.org.ar/viewer?StudyInstanceUIDs=${study.sysmedi14_ui}`}  
+                text="Ver Estudio"
+                  href={`https://portal.cemenurnk.org.ar/viewer?StudyInstanceUIDs=`}  
                 >
                   <IoMdSearch className='text-3xl text-white'/>  
                 </ExternalLinkButton>  
                 <ExternalLinkButton text="Compartir">
                   <IoMdShare className='text-3xl text-white'/>  
                 </ExternalLinkButton>
-              </div>
+              </div> */}
             </div>
           } 
       </div>

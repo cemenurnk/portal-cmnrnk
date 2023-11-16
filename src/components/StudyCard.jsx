@@ -1,13 +1,21 @@
-import React from 'react'
+import React, {useContext} from 'react'
 import { Link } from 'react-router-dom'
 import { formatDateTime } from '../helpers/date'
+import { SessionContext } from '../context/SessionContext'
 
 const StudyCard = (props) => {
+
+  const { setSysMedi10Selected } = useContext(SessionContext)
+
   return (
-    <Link to={`/estudio/${props.sysmedi10_uuid}`} className="p-5 bg-gray-100 rounded">
-      <p className="text-2xl font-bold">{props.sysmedi09_descripcion}</p>
-      <p className='text-gray-500 truncate'>{props. sysmedi10_descripcion}</p>
-      <p>{formatDateTime(props.sysmedi14_study_date)}</p>
+    <Link 
+      to={`/estudios/${props.sysMedi10Uuid}`} 
+      className="p-5 bg-gray-100 rounded"
+      onClick={ () => setSysMedi10Selected(props)}
+    >
+      <p className="text-2xl font-bold">{props.sysMedi09Descripcion}</p>
+      <p className='text-gray-500'>Dr/a. {props.sysMedi08Responsable}</p>
+      <p>{formatDateTime(props.sysMedi10Fecha)}</p>
     </Link>
   )
 }

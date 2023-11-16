@@ -1,43 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SessionContext } from '../context/SessionContext'
 
 import Logo from '../assets/logo.png'
+import Video from '../assets/video_login2.mp4'
 import Input from '../components/Input'
 import Navbar from '../components/Navbar'
 import Alert from '../components/Alert'
 import Loader from '../components/Loader'
-import http from '../helpers/http'
-
-const initalInterface = {
-  showLoader: false,
-  showAlert: false,
-  alertMessage: ''
-}
+import { loginPatient } from '../services/login'
 
 const intialForm = {
-  documento: '',
-  pin: ''
+  sysPers01Dni: '',
+  sysMedi01Pin: ''
 }
 
 const Login = () => {
   
-  const [userInterface, setUserInterface] = useState(initalInterface)
   const [disabledInputs, setDisabledInputs] = useState(false)
-  const [form, setForm] = useState(intialForm)
+  const [form, setForm]                     = useState(intialForm)
   
-  const navigate = useNavigate()
+  const { session: {token, loading}, setLoading, setSysMedi01, setAlert } = useContext(SessionContext)
 
-  const handleInterface = (key, value) =>{
-    setUserInterface(prev => ({...prev, [key]: value}))
-  }
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
 
     const name = e.target.name
     const value = e.target.value
 
-    if(name === "documento" && value.length > 8) return 
-    if(name === "documento" && value.length > 0 && !(/[0-9]+$/.test(value))) return
+    if(name === "sysPers01Dni" && value.length > 8) return 
+    if(name === "sysPers01Dni" && value.length > 0 && !(/[0-9]+$/.test(value))) return
 
     setForm(prev => ({...prev, [name]: value}))
   }
@@ -47,44 +40,38 @@ const Login = () => {
     try {
       e.preventDefault()
 
-      if(userInterface.showAlert){
-        handleInterface('showAlert', false)
-        handleInterface('alertMessage', '')
+      if(alert) setAlert(null)
+
+      setLoading(true)
+
+      if(form.sysPers01Dni === ""){
+        throw new Error("El número de DNI es requerido")
       }
 
-      handleInterface('showLoader', true)
-
-      if(form.documento === ""){
-        throw new Error("El número de documento es requerido")
-      }
-
-      if(form.pin === ""){
-        throw new Error("El pin es requerido")
+      if(form.sysMedi01Pin === ""){
+        throw new Error("El PIN es requerido")
       }
 
       //fetching
       setDisabledInputs(true)
 
-      const response = await http.post("/auth/login.php", {documento: form.documento, pin: form.pin})
+      const response = await loginPatient(form.sysPers01Dni, form.sysMedi01Pin, token)
 
-      handleInterface('showLoader', false)
+      setLoading(false)
 
-      if(["invalid", "error"].includes(response.status)){
+      if(response.resultid === "error"){
         setDisabledInputs(false)
-        handleInterface('showAlert', true)
-        handleInterface('alertMessage', response.message)
+        setAlert({text: response.resulttext, type: "danger"})
         return
       }
 
-      navigate("/")
-      // setTimeout(()=>{
-      //   navigate("/")
-      // }, 2000)
+      setSysMedi01(response.sysMedi01)
 
+      navigate("/estudios")
+    
     }catch(error){
-      handleInterface('showAlert', true)
-      handleInterface('alertMessage', error.message)
-      handleInterface('showLoader', false)
+      setLoading(false)
+      setAlert({text: error.message, type: "danger"})
     }
   }
 
@@ -93,21 +80,27 @@ const Login = () => {
   return (
     <>
       <Navbar color={"cemenurnk-primary"} title="Portal del paciente" showBackButton={false} showMenuButton={false}/>
-      <div className="container mx-auto px-3 flex flex-col items-center min-h-screen gap-4">
-        <img src={Logo} alt="Centro de Medicina Nuclear y Radioterapia Nestor Kirchner" className="mt-20 w-2/3 md:w-1/4"/>
-        <form action="#" className="flex flex-col w-full md:w-1/3 gap-4" onSubmit={handleSubmit}>
-          <Input type={"text"} name={"documento"} id={"documento"} label={"Número de Documento"} onChange={handleChange} value={form.documento} disabled={disabledInputs}/>
-          <Input type={"password"} name={"pin"} id={"pin"} label={"PIN"} onChange={handleChange} disabled={disabledInputs}/>
-          {
-            !userInterface.showLoader ?
-            <button type="submit" className='p-2 bg-cemenurnk-primary hover:bg-gray-400 rounded text-white font-bold'>
-              Ingresar
-            </button> :
-            <div className="p-2 bg-cemenurnk-primary rounded flex justify-center cursor-wait">
-              <Loader /> 
-            </div>}
-        </form>
-        {userInterface.showAlert && <Alert message={userInterface.alertMessage}/>}
+      <video className='max-h-screen' loop autoPlay muted src={Video}></video>
+      <div className='absolute top-0 right-0 min-h-screen bg-white w-full md:w-1/5 z-10 gap-4'>
+        <div className='mx-4'>
+          <img src={Logo} alt="Centro de Medicina Nuclear y Radioterapia Nestor Kirchner" className="mt-20"/>
+          <form action="#" className="flex flex-col gap-4 mb-4" onSubmit={handleSubmit}>
+            <Input type={"text"} name={"sysPers01Dni"} id={"sysPers01Dni"} label={"Número de Documento"} onChange={handleChange} value={form.sysPers01Dni} disabled={disabledInputs}/>
+            <Input type={"password"} name={"sysMedi01Pin"} id={"sysMedi01Pin"} label={"PIN"} onChange={handleChange} disabled={disabledInputs}/>
+            {
+              !loading &&
+              <button type="submit" className='p-2 bg-cemenurnk-primary hover:bg-gray-400 rounded text-white font-bold'>
+                Ingresar
+              </button>
+            }
+            {loading &&
+              <div className="p-2 bg-cemenurnk-primary rounded flex justify-center cursor-wait">
+                <Loader /> 
+              </div>
+            }
+          </form>
+          <Alert />
+        </div>
       </div>
     </>
   )

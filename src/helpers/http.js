@@ -1,8 +1,17 @@
 const http = {
-  host: 'https://www.cemenurnk.org.ar/modulos/api',
-  get: async (endpoint) =>{
+  host: 'https://apirest.cemenurnk.org.ar/',
+  get: async (endpoint, token) =>{
     try{
-      const response = await fetch(http.host + endpoint)
+      
+      const headers = {
+        'flexAgent': 'apirest-sievert'
+      }
+
+      if(token){
+        headers['X-Authorization-token'] = token
+      }
+      
+      const response = await fetch(http.host + endpoint, {headers: headers})
       const data = await response.json()
   
       return data
@@ -11,16 +20,24 @@ const http = {
       return {status: "error", message: "Ha ocurrido un error. Consulte con el administrador."}
     }
   },
-  post: async (endpoint, body) => {
+  post: async (endpoint, token, body) => {
     try{
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'flexAgent': 'apirest-sievert'
+      }
+
+      if(token){
+        headers['X-Authorization-token'] = token
+      }
+
       const response = await fetch(http.host + endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(body)
       })
-  
+      
       const data = await response.json()
       return data
     }catch(error){

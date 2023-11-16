@@ -1,233 +1,183 @@
-import { useState, useEffect } from "react"
+import { useState, useContext, useEffect } from "react"
 import { IoMdFunnel, IoMdTrash, IoIosSearch, IoIosPerson } from "react-icons/io"
+
+import { SessionContext } from "../context/SessionContext"
+
 import StudyCard from "../components/StudyCard"
 import Navbar from "../components/Navbar"
 import Dropdown from "../components/Dropdown"
 import Input from "../components/Input"
 import Check from "../components/Check"
-import { formatDate } from "../helpers/date"
 import Loader from "../components/Loader"
 
-import http from "../helpers/http"
-import ErrorMessage from "../components/ErrorMessage"
+import { formatDate } from "../helpers/date"
 
-const templatePatient = {
-  sysmedi02_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-  syspers01_nombre: "Jane",
-  syspers01_apellido: "Doe",
-  syspers01_dni: "30336001 "
-}
-
-const templateModalities = [
-  {sysmedi09_codigo: "TC", sysmedi09_descripcion: "Tomografía"},
-  {sysmedi09_codigo: "MG", sysmedi09_descripcion: "Mamografía"}
-]
-
-const templateStudies = [
-  {
-    sysmedi10_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-    sysmedi09_descripcion: "Mamografía",
-    sysmedi09_codigo: "MG",
-    sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
-    sysmedi14_study_date: "2023-08-23 14:50:22"
-  }, 
-  {
-    sysmedi10_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-    sysmedi09_descripcion: "Tomografía",
-    sysmedi09_codigo: "TC",
-    sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
-    sysmedi14_study_date: "2023-07-23 14:50:22"
-  }, 
-  {
-    sysmedi10_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-    sysmedi09_descripcion: "Mamografía",
-    sysmedi09_codigo: "MG",
-    sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
-    sysmedi14_study_date: "2023-08-03 14:50:22"
-  }, 
-  {
-    sysmedi10_uuid: "00323652-4c01-11ee-a5d3-0050568c9146",
-    sysmedi09_descripcion: "Tomografía",
-    sysmedi09_codigo: "TC",
-    sysmedi10_descripcion: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae dolorem vitae laborum beatae nesciunt reiciendis illum velit eveniet modi consequatur officia nulla, tempore nostrum suscipit explicabo voluptatum qui, aut quos!",
-    sysmedi14_study_date: "2023-06-23 14:50:22"
-  }, 
-]
+import { getSysMedi10List } from "../services/sysMedi10"
+import { getSysMedi09List } from "../services/sysMedi09"
  
 const initialFilters = {
-    dateFrom: "",
-    dateTo: "",
-    modalities: []
+  sysMedi10FechaFrom: "",
+  sysMedi10FechaTo: "",
+  sysMedi09List: []
 }
 
 const Studies = () => {
+
+  const { 
+    session:{ 
+      token, 
+      alert,
+      loading, 
+      sysMedi01,
+      sysMedi09List,
+      sysMedi10List,
+      filteredSysMedi10List
+    }, 
+    setLoading,
+    setAlert,
+    setSysMedi09List,
+    setSysMedi10List,
+    setFilteredSysMedi10List,
+  } = useContext(SessionContext)
 
   const [showDropdown, setShowDropdown] = useState(false)
   const [filters, setFilters]           = useState(initialFilters)
   const [filtersText, setFiltersText]   = useState("")
 
-  const [modalities, setModalities]     = useState([]) 
-  const [studies, setStudies]           = useState([])
-  const [patient, setPatient]           = useState(null)
-
-  const [filteredStudies, setFilteredStudies] = useState([])
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
-
   const handleClickFilters = () => setShowDropdown(prev => !prev)
 
   const handleChangeDates = (e) => setFilters(prev => ({...prev, [e.target.name]: e.target.value}))
 
-  const handleChangeModality = (e) => {
+  const handleChangeSysMedi09 = (e) => {
     const name = e.target.name
     //console.log(e.target.value)
 
-    const modalities = [...filters.modalities]
+    const sysMedi09ListLocal = [...filters.sysMedi09List]
 
-    if(modalities.includes(name)){
+    if(sysMedi09ListLocal.includes(name)){
       
-      const index = modalities.indexOf(name)
+      const index = sysMedi09ListLocal.indexOf(name)
       
-      modalities.splice(index, 1)
+      sysMedi09ListLocal.splice(index, 1)
     }else{
-      modalities.push(name)
+      sysMedi09ListLocal.push(name)
     }
 
-    setFilters(prev => ({...prev, modalities}))
+    setFilters(prev => ({...prev, sysMedi09List: sysMedi09ListLocal}))
   }
 
   const clearFilters = () => {
     setFiltersText("Todos")
     setFilters(initialFilters)
   }
+
   const buildFiltersText = () =>{
     let text = "Todos"
 
-    if(filters.dateFrom !== "" && filters.dateTo !== ""){
+    if(filters.sysMedi10FechaFrom !== "" && filters.sysMedi10FechaTo !== ""){
       
-      text = `Entre el ${formatDate(filters.dateFrom)} y el ${formatDate(filters.dateTo)}`
+      text = `Entre el ${formatDate(filters.sysMedi10FechaFrom)} y el ${formatDate(filters.sysMedi10FechaTo)}`
     }
 
-    if(filters.dateFrom !== "" && filters.dateTo === ""){
-      text = `Desde el ${formatDate(filters.dateFrom)}`
+    if(filters.sysMedi10FechaFrom !== "" && filters.sysMedi10FechaTo === ""){
+      text = `Desde el ${formatDate(filters.sysMedi10FechaFrom)}`
     }
 
-    if(filters.dateFrom === "" && filters.dateTo !== ""){
-      text = `Hasta el ${formatDate(filters.dateTo)}`
+    if(filters.sysMedi10FechaFrom === "" && filters.sysMedi10FechaTo !== ""){
+      text = `Hasta el ${formatDate(filters.sysMedi10FechaTo)}`
     }
 
-    if((filters.dateFrom !== "" || filters.dateTo !== "") && filters.modalities.length > 0){
+    if((filters.sysMedi10FechaFrom !== "" || filters.sysMedi10FechaTo !== "") && filters.sysMedi09List.length > 0){
       
-      text += " | Modalidades: " + modalities.filter(modality => filters.modalities.includes(modality.sysmedi09_codigo)).map(modality => modality.sysmedi09_descripcion).join("/")
+      text += " | Modalidades: " + sysMedi09List.filter(modality => filters.sysMedi09List.includes(modality.sysMedi09Codigo)).map(modality => modality.sysMedi09Descripcion).join("/")
     }
 
-    if(filters.dateFrom === "" && filters.dateTo === "" && filters.modalities.length > 0){
+    if(filters.sysMedi10FechaFrom === "" && filters.sysMedi10FechaTo === "" && filters.sysMedi09List.length > 0){
       
-      text = "Modalidades: " + modalities.filter(modality => filters.modalities.includes(modality.sysmedi09_codigo)).map(modality => modality.sysmedi09_descripcion).join("/")
+      text = "Modalidades: " + sysMedi09List.filter(modality => filters.sysMedi09List.includes(modality.sysMedi09Codigo)).map(modality => modality.sysMedi09Descripcion).join("/")
     }
 
     setFiltersText(text)
   }
 
-  const filterStudies = () =>{
+  const filterSysMedi10List = () =>{
 
-    let filteredStudiesLocal = studies
+    if(!sysMedi10List) return
 
-    if(filters.dateFrom !== ""){
-      filteredStudiesLocal = filteredStudiesLocal.filter(study => {
-        const studyDateObject = new Date(study.sysmedi14_study_date) 
-        const dateFromObject = new Date(filters.dateFrom)
+    let filteredSysMedi10ListLocal = [...sysMedi10List]
 
-        return studyDateObject.getTime() >= dateFromObject.getTime()
+    if(filters.sysMedi10FechaFrom !== ""){
+      filteredSysMedi10ListLocal = filteredSysMedi10ListLocal.filter(sysMedi10 => {
+        const sysMedi10FechaObject = new Date(sysMedi10.sysMedi10Fecha)
+        const sysMedi10FechaFromObject = new Date(filters.sysMedi10FechaFrom)
+
+        return sysMedi10FechaObject.getTime() >= sysMedi10FechaFromObject.getTime()
       })
     }
 
-    if(filters.dateTo !== ""){
-      filteredStudiesLocal = filteredStudiesLocal.filter(study => {
-        const studyDateObject = new Date(study.sysmedi14_study_date)
-        const dateToObject = new Date(filters.dateTo)
+    if(filters.sysMedi10FechaTo !== ""){
+      filteredSysMedi10ListLocal = filteredSysMedi10ListLocal.filter(sysMedi10 => {
+        const sysMedi10FechaObject = new Date(sysMedi10.sysMedi10Fecha)
+        const sysMedi10FechaToObject = new Date(filters.sysMedi10FechaTo)
 
-        return studyDateObject.getTime() <= dateToObject.getTime()
+        return sysMedi10FechaObject.getTime() <= sysMedi10FechaToObject.getTime()
       })
     }
 
-    if(filters.modalities.length > 0){
-      filteredStudiesLocal = filteredStudiesLocal.filter(study => filters.modalities.includes(study.sysmedi09_codigo))
+    if(filters.sysMedi09List.length > 0){
+      filteredSysMedi10ListLocal = filteredSysMedi10ListLocal.filter(sysMedi10 => filters.sysMedi09List.includes(sysMedi10.sysMedi09Codigo))
     }
 
-    setFilteredStudies(filteredStudiesLocal)
+    setFilteredSysMedi10List(filteredSysMedi10ListLocal)
   }
-
-  const getStudies = async () => {
-    try{
-      const responseStudies = await http.get('/sys_medi_10/get_estudios.php?sysmedi02_uuid=1')
-
-      console.log("respuesta => ", responseStudies)
-
-      if(responseStudies.status === "error"){
-        setError(true)
-        return
-      }
-      
-      setFilteredStudies(responseStudies.studies)
-    }catch(error){
-      console.log(error)
-    }
-  }
-
-  const getModalities = async () => {
-    try{
-
-      const responseModalities = await http.get('/sys_medi_09/get_modalidades.php')
-
-      if(responseModalities.status === "error"){
-        
-        return
-      }
-      
-      setModalities(responseModalities.modalities)
-
-    }catch(error){
-      console.log(error)
-    }
-  }
+  
+  if(!sysMedi01) return null
 
   useEffect(()=>{
-    //fetching
-
-    getStudies()
-    //getModalities()
-
-    setLoading(false)
+    
+    const getData = async () =>{
+      
+      setLoading(true)
+      
+      const sysMedi09Response = await getSysMedi09List(token)
+      const sysMedi10Response = await getSysMedi10List(sysMedi01.sysMedi02Uuid, token)
+      
+      if(sysMedi09Response.resultid === "error" || sysMedi10Response.resultid === "error"){
+        setAlert({text: "Ha ocurrido un error. Consulte con el Administrador.", type: "danger"})
+        setLoading(false)
+        return
+      }
+      
+      setSysMedi09List(sysMedi09Response.sysMedi09List)
+      setSysMedi10List(sysMedi10Response.sysMedi10List)
+      setFilteredSysMedi10List(sysMedi10Response.sysMedi10List)
+    
+      setLoading(false)
+    }
+    
+    getData()
 
   }, [])
 
   useEffect(()=>{
     buildFiltersText()
-    filterStudies()
+    filterSysMedi10List()
   }, [filters])
+
 
   return (
     <>
       <Navbar color="cemenurnk-secondary" title="Estudios"/>
       <div className='container mx-auto pt-20 px-3'>
-        {patient && 
           <div className="p-5 mb-5 bg-gray-100 rounded flex">
             <div className="self-center">
               <IoIosPerson className="text-5xl"/>
             </div>
             <div className="ml-3">
-              <p className="text-2xl">{patient.syspers01_apellido}, {patient.syspers01_nombre}</p>
-              <p className="text-xl text-gray-500">DNI: {patient.syspers01_dni}</p>
+              <p className="text-2xl">{sysMedi01.sysPers01Apellido}, {sysMedi01.sysPers01Nombre}</p>
+              <p className="text-xl text-gray-500">DNI: {sysMedi01.sysPers01Dni}</p>
             </div>
           </div>
-        }
-        {error && (
-          <div className="flex flex-col justify-center items-center mt-20">
-            <ErrorMessage />
-          </div>
-        )}
         {loading && (
             <div className="flex flex-col justify-center items-center mt-20">
               <Loader color="dark" size={50}/>
@@ -235,7 +185,7 @@ const Studies = () => {
           )
         }
         {
-          !loading && filteredStudies.length > 0 && (
+          !loading && sysMedi09List && (
             <>
               <div className="flex justify-between items-center mb-2">
                 <div className="flex flex-col md:flex-row">
@@ -257,33 +207,35 @@ const Studies = () => {
                 <div className="flex flex-col gap-2">
                   <p className="text-center font-bold">Fecha del estudio</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Input name="dateFrom" id="dateFrom" type="date" label="Desde" onChange={handleChangeDates} value={filters.dateFrom}/>
-                    <Input name="dateTo" id="dateTo" type="date" label="Hasta" onChange={handleChangeDates} value={filters.dateTo}/>
+                    <Input name="sysMedi10FechaFrom" id="sysMedi10FechaFrom" type="date" label="Desde" onChange={handleChangeDates} value={filters.sysMedi10FechaFrom}/>
+                    <Input name="sysMedi10FechaTo" id="sysMedi10FechaTo" type="date" label="Hasta" onChange={handleChangeDates} value={filters.sysMedi10FechaTo}/>
                   </div>
                   <p className="text-center font-bold">Modalidades</p>
-                  <div className="grid grid-cols-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {
-                      modalities.map((modality, index) => 
+                      sysMedi09List.map((sysMedi09, index) => 
                       <Check 
                         key={index} 
-                        name={modality.sysmedi09_codigo} 
-                        id={modality.sysmedi09_codigo} 
-                        label={modality.sysmedi09_descripcion} 
-                        onChange={handleChangeModality}
-                        checked={filters.modalities.includes(modality.sysmedi09_codigo)}
+                        name={sysMedi09.sysMedi09Codigo} 
+                        id={sysMedi09.sysMedi09Codigo} 
+                        label={sysMedi09.sysMedi09Descripcion} 
+                        onChange={handleChangeSysMedi09}
+                        checked={filters.sysMedi09List.includes(sysMedi09.sysMedi09Codigo)}
                       />)
                     }
                   </div>
                 </div>
               </Dropdown>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {filteredStudies.map((study, index) => <StudyCard key={index} {...study} />)}
-              </div>
+              {filteredSysMedi10List?.length>0 &&
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {filteredSysMedi10List.map((sysMedi10, index) => <StudyCard key={index} {...sysMedi10} />)}
+                </div>
+              }
             </>
           )
         }
         {
-          !loading && !error && filteredStudies.length < 1 && (
+          !loading && !filteredSysMedi10List?.length>0 && (
             <div className="flex flex-col justify-center items-center mt-20">
               <IoIosSearch className="text-7xl font-bold"/>
               <p className="text-lg font-bold">No se encontraron estudios.</p>
@@ -291,7 +243,7 @@ const Studies = () => {
             </div>
           )
         }
-      </div>
+      </div> 
     </>
   )
 }
