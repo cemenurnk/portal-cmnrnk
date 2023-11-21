@@ -4,10 +4,11 @@ import { getToken } from '../services/login'
 
 export const SessionContext = createContext(null)
 
-const initialSession = { 
+const initialSession = {
+  guest: false,
   token: null, 
   alert: null, 
-  loading: true, 
+  loading: false, 
   sysMedi01: null,
   sysMedi09List: null,
   sysMedi10List: null,
@@ -23,6 +24,7 @@ const SessionContextProvider = ({children}) => {
 
   const navigate = useNavigate()
 
+  const setGuest = (value) => setSession(prev => ({...prev, guest: value}))
   const setLoading = (value) => setSession(prev => ({...prev, loading: value}))
   const setAlert = (value) => setSession(prev => ({...prev, alert: value}))
   const setToken = (value) => setSession(prev => ({...prev, token: value}))
@@ -33,8 +35,8 @@ const SessionContextProvider = ({children}) => {
   const setFilteredSysMedi10List = (value) => setSession(prev => ({...prev, filteredSysMedi10List: value}))
 
   const logout = () => {
-    setSession(prev => ({...prev, alert: null, sysMedi01: null, loading: false}))
     navigate("/login")
+    setSession(initialSession)
   }
 
   useEffect(()=>{
@@ -45,7 +47,7 @@ const SessionContextProvider = ({children}) => {
       setLoading(false)
 
       if(!token){
-        setAlert("Ha ocurrido un error. Consulte con el administrador")
+        setAlert({text: "Ha ocurrido un error. Consulte con el administrador", type: "danger"})
         return
       }
 
@@ -60,11 +62,27 @@ const SessionContextProvider = ({children}) => {
   }, [session])
 
   useEffect(()=>{
+    if(pathname.includes("/compartido/estudios/")){
+      setGuest(true)
+      return
+    }
     if(pathname !== "/login" && !session.sysMedi01) navigate("/login")
   }, [pathname])
 
 return( 
-    <SessionContext.Provider value={{session, setLoading, setAlert, setToken, setSysMedi01, setSysMedi09List, setSysMedi10List, setSysMedi10Selected, setFilteredSysMedi10List, logout}}>
+    <SessionContext.Provider value={{
+        session, 
+        setLoading, 
+        setAlert, 
+        setToken, 
+        setSysMedi01, 
+        setSysMedi09List, 
+        setSysMedi10List, 
+        setSysMedi10Selected, 
+        setFilteredSysMedi10List,
+        setGuest,
+        logout
+      }}>
       {children}
     </SessionContext.Provider>
   )

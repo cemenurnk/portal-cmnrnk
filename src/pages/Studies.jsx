@@ -14,6 +14,7 @@ import { formatDate } from "../helpers/date"
 
 import { getSysMedi10List } from "../services/sysMedi10"
 import { getSysMedi09List } from "../services/sysMedi09"
+import PatientCard from "../components/PatientCard"
  
 const initialFilters = {
   sysMedi10FechaFrom: "",
@@ -26,7 +27,6 @@ const Studies = () => {
   const { 
     session:{ 
       token, 
-      alert,
       loading, 
       sysMedi01,
       sysMedi09List,
@@ -169,15 +169,7 @@ const Studies = () => {
     <>
       <Navbar color="cemenurnk-secondary" title="Estudios"/>
       <div className='container mx-auto pt-20 px-3'>
-          <div className="p-5 mb-5 bg-gray-100 rounded flex">
-            <div className="self-center">
-              <IoIosPerson className="text-5xl"/>
-            </div>
-            <div className="ml-3">
-              <p className="text-2xl">{sysMedi01.sysPers01Apellido}, {sysMedi01.sysPers01Nombre}</p>
-              <p className="text-xl text-gray-500">DNI: {sysMedi01.sysPers01Dni}</p>
-            </div>
-          </div>
+        <PatientCard />
         {loading && (
             <div className="flex flex-col justify-center items-center mt-20">
               <Loader color="dark" size={50}/>

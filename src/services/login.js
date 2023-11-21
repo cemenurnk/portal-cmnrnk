@@ -1,7 +1,7 @@
 import http from "../helpers/http"
 
 export const getToken = async () => {
-  const credentials = {username:"sievert",password: "PwXWeJfNWKaJ"}
+  const credentials = {username: import.meta.env.VITE_USERNAME ,password: import.meta.env.VITE_PASSWORD}
 
   const response = await http.post('login/', null, credentials)
 

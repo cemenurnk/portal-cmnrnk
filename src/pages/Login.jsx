@@ -20,7 +20,7 @@ const Login = () => {
   const [disabledInputs, setDisabledInputs] = useState(false)
   const [form, setForm]                     = useState(intialForm)
   
-  const { session: {token, loading}, setLoading, setSysMedi01, setAlert } = useContext(SessionContext)
+  const { session: {guest, token, loading}, setLoading, setSysMedi01, setAlert, setGuest } = useContext(SessionContext)
 
   const navigate = useNavigate()
 
@@ -65,6 +65,7 @@ const Login = () => {
         return
       }
 
+      if(guest) setGuest(false)
       setSysMedi01(response.sysMedi01)
 
       navigate("/estudios")
