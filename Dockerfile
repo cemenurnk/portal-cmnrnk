@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+ENV VITE_USERNAME=sievert
+ENV VITE_PASSWORD=PwXWeJfNWKaJ
+
 WORKDIR /app
 
 COPY package.json .
