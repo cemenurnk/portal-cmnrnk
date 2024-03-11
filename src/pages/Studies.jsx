@@ -167,7 +167,7 @@ const Studies = () => {
 
   return (
     <>
-      <Navbar color="cemenurnk-secondary" title="Estudios"/>
+      <Navbar color="cemenurnk-secondary" title="Estudios y Tratamientos"/>
       <div className='container mx-auto pt-20 px-3'>
         <PatientCard />
         {loading && (

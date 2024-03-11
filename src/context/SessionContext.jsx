@@ -36,7 +36,9 @@ const SessionContextProvider = ({children}) => {
 
   const logout = () => {
     navigate("/login")
-    setSession(initialSession)
+
+    //Eliminar todos los datos de la sesión exceptuando el token
+    setSession(prev => ({...initialSession, token: prev.token}))
   }
 
   useEffect(()=>{

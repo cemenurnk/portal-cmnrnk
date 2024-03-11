@@ -1,14 +1,15 @@
 import { useEffect, useContext } from 'react'
 import { useParams } from 'react-router-dom';
 import { IoMdSearch, IoMdShare, IoMdCopy } from "react-icons/io";
-import Navbar from "../components/Navbar"
-import { formatDateTime } from '../helpers/date';
 
+import http from '../helpers/http';
+import { formatDateTime } from '../helpers/date';
+import { SessionContext } from '../context/SessionContext';
+import { getOneSysMedi10 } from '../services/sysMedi10';
+import Navbar from "../components/Navbar"
 import Loader from '../components/Loader';
 import Alert from '../components/Alert'
-import { SessionContext } from '../context/SessionContext';
 import PatientCard from '../components/PatientCard';
-import { getOneSysMedi10 } from '../services/sysMedi10';
 
 const LinkListItem = ({title, link, onClick}) => {
 
@@ -48,9 +49,18 @@ const StudyDetail = () => {
 
   const params = useParams()
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = async (text, sysMedi30Codigo) => {
     navigator.clipboard.writeText(text)
-    setAlert({text: "Copiado en portapapeles.", type: "success"})
+
+    //guardar log de las actividades
+    const response = await http.post('sys_medi_29/', token, {sysMedi10Uuid: sysMedi10Selected.sysMedi10Uuid, sysMedi30Codigo})
+
+    if(response.resultid === "success"){
+      setAlert({text: "Copiado en portapapeles.", type: "success"})
+    }else{
+      setAlert({text: "Ha ocurrido un error. Consulte con el administrador.", type: "danger"})
+    }
+
     setTimeout(()=> setAlert(null), 5000)
   }
 
@@ -97,7 +107,10 @@ const StudyDetail = () => {
                 <div className='flex text-4xl font-bold items-center'>
                   <p className=''>{sysMedi10Selected.sysMedi09Descripcion}</p>
                   {!guest &&
-                    <button type='button' title='Compartir' onClick={()=>copyToClipboard(`https://portal.cemenurnk.org.ar/compartido/estudios/${params.sysMedi10Uuid}`)}>
+                    <button 
+                      type='button' 
+                      title='Compartir' 
+                      onClick={()=>copyToClipboard(`https://miportal.cemenurnk.org.ar/compartido/estudios/${params.sysMedi10Uuid}`, "ACT3")}>
                       <IoMdShare className='text-gray-500'/>
                     </button>
                   }
@@ -119,7 +132,7 @@ const StudyDetail = () => {
                           key={index} 
                           title={sysMedi11.sysMedi11Titulo} 
                           link={sysMedi11.sysMedi11Enlace}
-                          onClick={()=>copyToClipboard(sysMedi11.sysMedi11Enlace)}
+                          onClick={()=>copyToClipboard(sysMedi11.sysMedi11Enlace, "ACT5")}
                           />))
                         }
                   </ul>
@@ -133,7 +146,7 @@ const StudyDetail = () => {
                         key={index} 
                         title={`${sysMedi16.sysMedi15Descripcion} - ${formatDateTime(sysMedi16.sysMedi14StudyDate)}`} 
                         link={sysMedi16.sysMedi16Enlace}
-                        onClick={()=>copyToClipboard(sysMedi16.sysMedi16Enlace)}
+                        onClick={()=>copyToClipboard(sysMedi16.sysMedi16Enlace, "ACT4")}
                         />))
                       }
                   </ul>
