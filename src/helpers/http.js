@@ -1,5 +1,5 @@
 const http = {
-  host: 'https://apirest.cemenurnk.org.ar/',
+  host: import.meta.env.VITE_APIREST,
   get: async (endpoint, token) =>{
     try{
       

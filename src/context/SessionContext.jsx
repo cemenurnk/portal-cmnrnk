@@ -8,7 +8,9 @@ const initialSession = {
   guest: false,
   token: null, 
   alert: null, 
-  loading: false, 
+  loading: false,
+  sysMedi29Latitude: null,
+  sysMedi29Longitude: null, 
   sysMedi01: null,
   sysMedi09List: null,
   sysMedi10List: null,
@@ -57,11 +59,23 @@ const SessionContextProvider = ({children}) => {
     }
     
     if(!session.token) getTokenApi()
+
+    //Obtener ubicación del usuario
+    if("geolocation" in navigator){
+      navigator.geolocation.getCurrentPosition(position => {
+        setSession(prev => 
+          ({...prev, 
+            sysMedi29Latitude: position.coords.latitude.toString(), 
+            sysMedi29Longitude: position.coords.longitude.toString()
+          })
+        )
+      })
+    }
   }, [])
 
   useEffect(()=>{
-    console.log("session modificada => ", session)
-  }, [session])
+    if(import.meta.env.VITE_ENVIRONMENT === "DESA") console.log("session modificada => ", session)
+  }, [session])  
 
   useEffect(()=>{
     if(pathname.includes("/compartido/estudios/")){

@@ -110,7 +110,7 @@ const StudyDetail = () => {
                     <button 
                       type='button' 
                       title='Compartir' 
-                      onClick={()=>copyToClipboard(`https://miportal.cemenurnk.org.ar/compartido/estudios/${params.sysMedi10Uuid}`, "ACT3")}>
+                      onClick={()=>copyToClipboard(`${import.meta.env.VITE_DOMINIO_PORTAL}compartido/estudios/${params.sysMedi10Uuid}`, "ACT3")}>
                       <IoMdShare className='text-gray-500'/>
                     </button>
                   }
