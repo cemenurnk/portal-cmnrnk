@@ -2,7 +2,7 @@ import { useEffect, useContext } from 'react'
 import { useParams } from 'react-router-dom';
 import { IoMdSearch, IoMdShare, IoMdCopy } from "react-icons/io";
 
-import http from '../helpers/http';
+//import http from '../helpers/http';
 import { formatDateTime } from '../helpers/date';
 import { SessionContext } from '../context/SessionContext';
 import { getOneSysMedi10 } from '../services/sysMedi10';
@@ -10,6 +10,9 @@ import Navbar from "../components/Navbar"
 import Loader from '../components/Loader';
 import Alert from '../components/Alert'
 import PatientCard from '../components/PatientCard';
+
+// import usePostFetch from '../hooks/usePostFetch';
+// import useOnLoadRequests from '../hooks/useOnLoadRequests';
 
 const LinkListItem = ({title, link, onClick}) => {
 
@@ -64,32 +67,32 @@ const StudyDetail = () => {
     setTimeout(()=> setAlert(null), 5000)
   }
 
-  useEffect(()=>{
-    const getStudy = async () => {
+  // useEffect(()=>{
+  //   const getStudy = async () => {
 
-      setLoading(true)
+  //     setLoading(true)
 
-      const sysMedi10Response = await getOneSysMedi10(params.sysMedi10Uuid, token)
+  //     const sysMedi10Response = await getOneSysMedi10(params.sysMedi10Uuid, token)
 
-      if(sysMedi10Response.resultid === "error"){
-        setAlert({text: "Ha ocurrido un error. Consulte con el Administrador.", type: "danger"})
-        setLoading(false)
-        return
-      }
+  //     if(sysMedi10Response.resultid === "error"){
+  //       setAlert({text: "Ha ocurrido un error. Consulte con el Administrador.", type: "danger"})
+  //       setLoading(false)
+  //       return
+  //     }
 
-      setSysMedi10Selected(sysMedi10Response.sysMedi10)
-      setSysMedi01(sysMedi10Response.sysMedi01)
+  //     setSysMedi10Selected(sysMedi10Response.sysMedi10)
+  //     setSysMedi01(sysMedi10Response.sysMedi01)
 
-      setLoading(false)
-    }
+  //     setLoading(false)
+  //   }
 
-    if(!token) return
+  //   if(!token) return
     
-    if(sysMedi10Selected) return
+  //   if(sysMedi10Selected) return
     
-    getStudy()
+  //   getStudy()
 
-  }, [token])
+  // }, [token])
 
   return (
     <>

@@ -8,7 +8,10 @@ import Input from '../components/Input'
 import Navbar from '../components/Navbar'
 import Alert from '../components/Alert'
 import Loader from '../components/Loader'
-import { loginPatient } from '../services/login'
+
+import { getApiHeaders, getApiUrl } from '../helpers/api'
+import { debugConsole } from '../helpers/debug'
+import { setUser } from '../helpers/localstorage'
 
 const intialForm = {
   sysPers01Dni: '',
@@ -19,8 +22,13 @@ const Login = () => {
   
   const [disabledInputs, setDisabledInputs] = useState(false)
   const [form, setForm]                     = useState(intialForm)
-  
-  const { session: {guest, token, loading}, setLoading, setSysMedi01, setAlert, setGuest } = useContext(SessionContext)
+
+  const [loading, setLoading] = useState(false)
+  const [alert, setAlert] = useState(null)
+
+  const {
+    setSession
+  } = useContext(SessionContext)
 
   const navigate = useNavigate()
 
@@ -40,9 +48,7 @@ const Login = () => {
     try {
       e.preventDefault()
 
-      if(alert) setAlert(null)
-
-      setLoading(true)
+      setAlert(null)
 
       if(form.sysPers01Dni === ""){
         throw new Error("El número de DNI es requerido")
@@ -55,32 +61,37 @@ const Login = () => {
       //fetching
       setDisabledInputs(true)
 
-      const response = await loginPatient(form.sysPers01Dni, form.sysMedi01Pin, token)
+      setLoading(true)
 
-      setLoading(false)
+      const response = await fetch(getApiUrl("sys_medi_01/login/"), {
+        method: 'POST',
+        headers: getApiHeaders(true),
+        body: JSON.stringify(form)
+      })
 
-      if(response.resultid === "error"){
-        setDisabledInputs(false)
-        setAlert({text: response.resulttext, type: "danger"})
-        return
+      const data = await response.json()
+
+      if(data.resultid === "error"){
+        throw new Error(data.resulttext)
       }
 
-      if(guest) setGuest(false)
-      setSysMedi01(response.sysMedi01)
-
+      setSession(data.sysMedi01)
+      setUser(data.sysMedi01)
       navigate("/estudios")
     
     }catch(error){
-      setLoading(false)
       setAlert({text: error.message, type: "danger"})
+      setDisabledInputs(false)
+      debugConsole(error)
+    }finally{
+      setLoading(false)
+      setDisabledInputs(false)
     }
   }
 
-  //useEffect(()=>console.log(form), [form])
-
   return (
     <>
-      <Navbar color={"cemenurnk-primary"} title="Portal del paciente" showBackButton={false} showMenuButton={false}/>
+      {/* <Navbar color={"cemenurnk-primary"} title="Portal del paciente" showBackButton={false} showMenuButton={false}/> */}
       <video className='max-h-screen' loop autoPlay muted src={Video}></video>
       <div className='absolute top-0 right-0 min-h-screen bg-white w-full md:w-1/5 z-10 gap-4'>
         <div className='mx-4'>
@@ -100,7 +111,7 @@ const Login = () => {
               </div>
             }
           </form>
-          <Alert />
+          <Alert state={alert}/>
         </div>
       </div>
     </>

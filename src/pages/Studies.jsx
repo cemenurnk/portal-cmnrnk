@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react"
+import { useState, useContext, useEffect, Suspense } from "react"
 import { IoMdFunnel, IoMdTrash, IoIosSearch, IoIosPerson } from "react-icons/io"
 
 import { SessionContext } from "../context/SessionContext"
@@ -12,9 +12,9 @@ import Loader from "../components/Loader"
 
 import { formatDate } from "../helpers/date"
 
+import PatientCard from "../components/PatientCard"
 import { getSysMedi10List } from "../services/sysMedi10"
 import { getSysMedi09List } from "../services/sysMedi09"
-import PatientCard from "../components/PatientCard"
  
 const initialFilters = {
   sysMedi10FechaFrom: "",
@@ -24,21 +24,12 @@ const initialFilters = {
 
 const Studies = () => {
 
-  const { 
-    session:{ 
-      token, 
-      loading, 
-      sysMedi01,
-      sysMedi09List,
-      sysMedi10List,
-      filteredSysMedi10List
-    }, 
-    setLoading,
-    setAlert,
-    setSysMedi09List,
-    setSysMedi10List,
-    setFilteredSysMedi10List,
-  } = useContext(SessionContext)
+  const { session } = useContext(SessionContext)
+
+  const [ loading, setLoading ] = useState(false)
+  const [ sysMedi09List, setSysMedi09List ] = useState(null)
+  const [ sysMedi10List, setSysMedi10List ] = useState(null)
+  const [ filteredSysMedi10List, setFilteredSysMedi10List ] = useState(null)
 
   const [showDropdown, setShowDropdown] = useState(false)
   const [filters, setFilters]           = useState(initialFilters)
@@ -131,45 +122,39 @@ const Studies = () => {
     setFilteredSysMedi10List(filteredSysMedi10ListLocal)
   }
   
-  if(!sysMedi01) return null
+  if(!session) return null
 
-  useEffect(()=>{
-    
-    const getData = async () =>{
-      
-      setLoading(true)
-      
-      const sysMedi09Response = await getSysMedi09List(token)
-      const sysMedi10Response = await getSysMedi10List(sysMedi01.sysMedi02Uuid, token)
-      
-      if(sysMedi09Response.resultid === "error" || sysMedi10Response.resultid === "error"){
-        setAlert({text: "Ha ocurrido un error. Consulte con el Administrador.", type: "danger"})
-        setLoading(false)
-        return
-      }
-      
-      setSysMedi09List(sysMedi09Response.sysMedi09List)
-      setSysMedi10List(sysMedi10Response.sysMedi10List)
-      setFilteredSysMedi10List(sysMedi10Response.sysMedi10List)
-    
-      setLoading(false)
-    }
-    
-    getData()
+  useEffect(() => {
+
+    setLoading(true)
+
+    Promise.all([
+      getSysMedi09List(),
+      getSysMedi10List(session.sysMedi02Uuid)
+    ]).then(([sysMedi09List, sysMedi10List]) => {
+      setSysMedi09List(sysMedi09List)
+      setSysMedi10List(sysMedi10List)
+      setFilteredSysMedi10List(sysMedi10List)
+    })
+    .catch(error => setAlert({text: error.message, type: "danger"}))
+    .finally(() => setLoading(false))
 
   }, [])
+
+  useEffect(()=>{
+    setFilteredSysMedi10List(sysMedi10List)
+  }, [sysMedi10List])
 
   useEffect(()=>{
     buildFiltersText()
     filterSysMedi10List()
   }, [filters])
 
-
   return (
     <>
-      <Navbar color="cemenurnk-secondary" title="Estudios y Tratamientos"/>
+      {/* <Navbar color="cemenurnk-secondary" title="Estudios y Tratamientos"/> */}
       <div className='container mx-auto pt-20 px-3'>
-        <PatientCard />
+        {/* <PatientCard /> */}
         {loading && (
             <div className="flex flex-col justify-center items-center mt-20">
               <Loader color="dark" size={50}/>
@@ -223,7 +208,7 @@ const Studies = () => {
                   {filteredSysMedi10List.map((sysMedi10, index) => <StudyCard key={index} {...sysMedi10} />)}
                 </div>
               }
-            </>
+              </>
           )
         }
         {
@@ -235,7 +220,7 @@ const Studies = () => {
             </div>
           )
         }
-      </div> 
+      </div>
     </>
   )
 }
