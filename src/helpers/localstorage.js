@@ -26,6 +26,8 @@ export const setUser = ({
 
 export const getUser = () => (JSON.parse(localStorage.getItem('portal-cemenurnk-user')))
 
+export const removeUser = () => {localStorage.removeItem('portal-cemenurnk-user')}
+
 export const setCoords = ({
   sysMedi29Latitude, 
   sysMedi29Longitude

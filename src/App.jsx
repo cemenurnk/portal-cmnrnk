@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -11,9 +11,12 @@ import NotFound from './pages/NotFound'
 import { getApiUrl } from './helpers/api'
 import { setCoords, setToken } from './helpers/localstorage'
 import { debugConsole } from './helpers/debug'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
- 
+  
+  const [isTokenStored, setIsTokenStored] = useState(false)
+
   useEffect(() => {
 
     // Obtener token de la apirest de sievert
@@ -35,8 +38,12 @@ function App() {
       }
   
       setToken(data.tokenAuth)
+      setIsTokenStored(true)
     })
-    .catch(error => debugConsole(error))
+    .catch(error => {
+      debugConsole(error)
+      setIsTokenStored(false)
+    })
 
     // Obtener ubicación del usuario
 
@@ -54,13 +61,15 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <SessionContextProvider>
+        <SessionContextProvider isTokenStored={isTokenStored} setIsTokenStored={setIsTokenStored}>
           <Routes>
-            <Route path='/' element={<Home/>}/>
             <Route path='/login' element={<Login/>}/>
-            <Route path='/estudios' element={<Studies />}/>
-            {/* <Route path='/estudios/:sysMedi10Uuid' element={<StudyDetail />}/>
-            <Route path='/compartido/estudios/:sysMedi10Uuid' element={<StudyDetail />} /> */}
+            <Route element={<ProtectedRoute />}>
+              <Route path='/' element={<Navigate to="/estudios" replace={true}/>}/>
+              <Route path='/estudios' element={<Studies />}/>
+              <Route path='/estudios/:sysMedi10Uuid' element={<StudyDetail />}/>
+            </Route>
+            <Route path='/compartido/estudios/:sysMedi10Uuid' element={<StudyDetail />} />
             <Route path='*' element={<NotFound />} />
           </Routes>
         </SessionContextProvider>

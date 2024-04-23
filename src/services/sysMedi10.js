@@ -1,4 +1,3 @@
-//import http from "../helpers/http"
 import { getApiUrl, getApiHeaders } from "../helpers/api"
 
 export const getSysMedi10List = (sysMedi02Uuid) => {
@@ -10,8 +9,11 @@ export const getSysMedi10List = (sysMedi02Uuid) => {
   return response
 }
 
-export const getOneSysMedi10 = async (sysMedi10Uuid, token) => {
-  const response = await http.get(`sys_medi_10/${sysMedi10Uuid}`, token)
+export const getOneSysMedi10 = (sysMedi10Uuid) => {
+  
+  const response = fetch(getApiUrl(`sys_medi_10/${sysMedi10Uuid}`), { headers: getApiHeaders(true) })
+  .then(response => response.json())
+  .then(data => ({sysMedi01: data.sysMedi01, sysMedi10: data.sysMedi10}))
 
   return response
 }

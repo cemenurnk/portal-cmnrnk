@@ -1,7 +1,5 @@
-import { useState, useContext, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { IoMdFunnel, IoMdTrash, IoIosSearch, IoIosPerson } from "react-icons/io"
-
-import { SessionContext } from "../context/SessionContext"
 
 import StudyCard from "../components/StudyCard"
 import Navbar from "../components/Navbar"
@@ -13,8 +11,10 @@ import Loader from "../components/Loader"
 import { formatDate } from "../helpers/date"
 
 import PatientCard from "../components/PatientCard"
+
 import { getSysMedi10List } from "../services/sysMedi10"
 import { getSysMedi09List } from "../services/sysMedi09"
+import { getUser } from "../helpers/localstorage"
  
 const initialFilters = {
   sysMedi10FechaFrom: "",
@@ -24,7 +24,7 @@ const initialFilters = {
 
 const Studies = () => {
 
-  const { session } = useContext(SessionContext)
+  const patient = getUser()
 
   const [ loading, setLoading ] = useState(false)
   const [ sysMedi09List, setSysMedi09List ] = useState(null)
@@ -122,7 +122,7 @@ const Studies = () => {
     setFilteredSysMedi10List(filteredSysMedi10ListLocal)
   }
   
-  if(!session) return null
+  // if(!session) return null
 
   useEffect(() => {
 
@@ -130,7 +130,7 @@ const Studies = () => {
 
     Promise.all([
       getSysMedi09List(),
-      getSysMedi10List(session.sysMedi02Uuid)
+      getSysMedi10List(patient.sysMedi02Uuid)
     ]).then(([sysMedi09List, sysMedi10List]) => {
       setSysMedi09List(sysMedi09List)
       setSysMedi10List(sysMedi10List)
@@ -141,9 +141,9 @@ const Studies = () => {
 
   }, [])
 
-  useEffect(()=>{
-    setFilteredSysMedi10List(sysMedi10List)
-  }, [sysMedi10List])
+  // useEffect(()=>{
+  //   setFilteredSysMedi10List(sysMedi10List)
+  // }, [sysMedi10List])
 
   useEffect(()=>{
     buildFiltersText()
@@ -152,9 +152,9 @@ const Studies = () => {
 
   return (
     <>
-      {/* <Navbar color="cemenurnk-secondary" title="Estudios y Tratamientos"/> */}
+      <Navbar color="cemenurnk-secondary" title="Estudios y Tratamientos"/>
       <div className='container mx-auto pt-20 px-3'>
-        {/* <PatientCard /> */}
+        <PatientCard patient={patient}/>
         {loading && (
             <div className="flex flex-col justify-center items-center mt-20">
               <Loader color="dark" size={50}/>

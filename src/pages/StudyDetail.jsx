@@ -1,5 +1,5 @@
-import { useEffect, useContext } from 'react'
-import { useParams } from 'react-router-dom';
+import { useEffect, useContext, useState } from 'react'
+import { useParams, useLocation } from 'react-router-dom';
 import { IoMdSearch, IoMdShare, IoMdCopy } from "react-icons/io";
 
 //import http from '../helpers/http';
@@ -10,6 +10,9 @@ import Navbar from "../components/Navbar"
 import Loader from '../components/Loader';
 import Alert from '../components/Alert'
 import PatientCard from '../components/PatientCard';
+import { getApiHeaders, getApiUrl } from '../helpers/api';
+import { debugConsole } from '../helpers/debug';
+import { getUser } from '../helpers/localstorage';
 
 // import usePostFetch from '../hooks/usePostFetch';
 // import useOnLoadRequests from '../hooks/useOnLoadRequests';
@@ -37,18 +40,14 @@ const LinkListItem = ({title, link, onClick}) => {
 
 const StudyDetail = () => {
 
-  const { 
-    session: { 
-      token, 
-      guest, 
-      loading, 
-      sysMedi10Selected 
-    }, 
-    setAlert, 
-    setLoading, 
-    setSysMedi01, 
-    setSysMedi10Selected
-  } = useContext(SessionContext)
+  const { state } = useLocation()
+  const storedUser = getUser()
+
+  const [ patient, setPatient ] = useState(storedUser)
+  const [ study, setStudy ] = useState(state?.selectedStudy)
+  const [ loading, setLoading ] = useState(false) 
+  const [ alert, setAlert ] = useState(null)
+  const { isTokenStored } = useContext(SessionContext)
 
   const params = useParams()
 
@@ -56,43 +55,41 @@ const StudyDetail = () => {
     navigator.clipboard.writeText(text)
 
     //guardar log de las actividades
-    const response = await http.post('sys_medi_29/', token, {sysMedi10Uuid: sysMedi10Selected.sysMedi10Uuid, sysMedi30Codigo})
+    const response = await fetch(
+      getApiUrl('sys_medi_29/'), 
+      {
+        method: "POST",
+        headers: getApiHeaders(), 
+        body: JSON.stringify({sysMedi10Uuid: study.sysMedi10Uuid, sysMedi30Codigo})
+      }
+    )
 
-    if(response.resultid === "success"){
-      setAlert({text: "Copiado en portapapeles.", type: "success"})
-    }else{
+    if(response.resultid === "error" || typeof response === "string"){
       setAlert({text: "Ha ocurrido un error. Consulte con el administrador.", type: "danger"})
+      debugConsole(response)
+    }else{
+      setAlert({text: "Copiado en portapapeles.", type: "success"})
     }
 
     setTimeout(()=> setAlert(null), 5000)
   }
 
-  // useEffect(()=>{
-  //   const getStudy = async () => {
+  useEffect(()=>{
 
-  //     setLoading(true)
+    if(!study && isTokenStored){
+      
+      setLoading(true)
+      
+      //servicio para obtener el estudio
+      getOneSysMedi10(params.sysMedi10Uuid)
+      .then(data => {
+        setStudy(data.sysMedi10)
+        setPatient(data.sysMedi01)
+      })
+      .finally(setLoading(false))
+    }
 
-  //     const sysMedi10Response = await getOneSysMedi10(params.sysMedi10Uuid, token)
-
-  //     if(sysMedi10Response.resultid === "error"){
-  //       setAlert({text: "Ha ocurrido un error. Consulte con el Administrador.", type: "danger"})
-  //       setLoading(false)
-  //       return
-  //     }
-
-  //     setSysMedi10Selected(sysMedi10Response.sysMedi10)
-  //     setSysMedi01(sysMedi10Response.sysMedi01)
-
-  //     setLoading(false)
-  //   }
-
-  //   if(!token) return
-    
-  //   if(sysMedi10Selected) return
-    
-  //   getStudy()
-
-  // }, [token])
+  }, [isTokenStored])
 
   return (
     <>
@@ -103,13 +100,13 @@ const StudyDetail = () => {
               <Loader color='black' size={50}/>
             </div> 
           }
-          {sysMedi10Selected &&
+          {study &&
             <div className='pt-20'>
-              {guest && <PatientCard />}
+              <PatientCard patient={patient}/>
               <div className='flex flex-col gap-5'>
                 <div className='flex text-4xl font-bold items-center'>
-                  <p className=''>{sysMedi10Selected.sysMedi09Descripcion}</p>
-                  {!guest &&
+                  <p className=''>{study.sysMedi09Descripcion}</p>
+                  {storedUser &&
                     <button 
                       type='button' 
                       title='Compartir' 
@@ -120,17 +117,17 @@ const StudyDetail = () => {
                 </div>
                 <div>
                   <p className='text-base text-sky-500 mb-0'>Fecha y Hora</p>
-                  <p className='text-xl'>{formatDateTime(sysMedi10Selected.sysMedi10Fecha)}</p>
+                  <p className='text-xl'>{formatDateTime(study.sysMedi10Fecha)}</p>
                 </div>
                 <div>
                   <p className='text-base text-sky-500 mb-0'>Médico Responsable</p>
-                  <p className='text-xl'>{sysMedi10Selected.sysMedi08Responsable}</p>
+                  <p className='text-xl'>{study.sysMedi08Responsable}</p>
                 </div>
                 <div>
                   <p className='text-base text-sky-500 mb-0'>Informes</p>
                   <ul className='flex flex-col gap-2'>
                     {
-                      sysMedi10Selected.sysMedi11List.map((sysMedi11, index) => (
+                      study.sysMedi11List.map((sysMedi11, index) => (
                         <LinkListItem 
                           key={index} 
                           title={sysMedi11.sysMedi11Titulo} 
@@ -144,7 +141,7 @@ const StudyDetail = () => {
                   <p className='text-base text-sky-500 mb-0'>Imágenes</p>
                   <ul className='flex flex-col gap-2'>
                     {
-                      sysMedi10Selected.sysMedi16List.map((sysMedi16, index) => (
+                      study.sysMedi16List.map((sysMedi16, index) => (
                         <LinkListItem 
                         key={index} 
                         title={`${sysMedi16.sysMedi15Descripcion} - ${formatDateTime(sysMedi16.sysMedi14StudyDate)}`} 
@@ -154,7 +151,21 @@ const StudyDetail = () => {
                       }
                   </ul>
                 </div>
-                <Alert />
+                <div>
+                  <p className='text-base text-sky-500 mb-0'>Documentos</p>
+                  <ul className='flex flex-col gap-2'>
+                    {
+                      study.sysMedi19List.map((sysMedi19, index) => (
+                        <LinkListItem 
+                        key={index} 
+                        title={`${sysMedi19.sysMedi19Descripcion} - ${formatDateTime(sysMedi19.sysMedi19Fapl)}`} 
+                        link={sysMedi19.sysMedi19Enlace}
+                        onClick={()=>copyToClipboard(sysMedi19.sysMedi19Enlace, "ACT6")}
+                        />))
+                      }
+                  </ul>
+                </div>
+                <Alert state={alert}/>
               </div>
             </div>
           } 
