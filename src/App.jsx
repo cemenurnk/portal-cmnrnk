@@ -2,15 +2,17 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 
 import Login from './pages/Login'
-import Home from './pages/Home'
+//import Home from './pages/Home'
 import Studies from './pages/Studies'
 import StudyDetail from './pages/StudyDetail'
 import SessionContextProvider from './context/SessionContext'
 import NotFound from './pages/NotFound'
+import MedicalReport from './pages/MedicalReport'
 
 import { getApiUrl } from './helpers/api'
 import { setCoords, setToken } from './helpers/localstorage'
 import { debugConsole } from './helpers/debug'
+
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -55,7 +57,6 @@ function App() {
         })
       })
     }
-  
   }, [])
   
   return (
@@ -70,6 +71,7 @@ function App() {
               <Route path='/estudios/:sysMedi10Uuid' element={<StudyDetail />}/>
             </Route>
             <Route path='/compartido/estudios/:sysMedi10Uuid' element={<StudyDetail />} />
+            <Route path='/informes/:sysMedi11Uuid' element={<MedicalReport />} /> 
             <Route path='*' element={<NotFound />} />
           </Routes>
         </SessionContextProvider>

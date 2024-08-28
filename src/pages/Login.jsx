@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Logo from '../assets/logo.png'
-import Video from '../assets/video_login2.mp4'
 import Input from '../components/Input'
 import Navbar from '../components/Navbar'
 import Alert from '../components/Alert'
@@ -86,10 +84,10 @@ const Login = () => {
   return (
     <>
       <Navbar color={"cemenurnk-primary"} title="Portal del paciente" showBackButton={false} showMenuButton={false}/>
-      <video className='max-h-screen' loop autoPlay muted src={Video}></video>
+      <video className='max-h-screen' loop autoPlay muted src='/video_login2.mp4'></video>
       <div className='absolute top-0 right-0 min-h-screen bg-white w-full md:w-1/5 z-10 gap-4'>
         <div className='mx-4'>
-          <img src={Logo} alt="Centro de Medicina Nuclear y Radioterapia Nestor Kirchner" className="mt-20"/>
+          <img src="/logo.png" alt="Centro de Medicina Nuclear y Radioterapia Nestor Kirchner" className="mt-20"/>
           <form action="#" className="flex flex-col gap-4 mb-4" onSubmit={handleSubmit}>
             <Input type={"text"} name={"sysPers01Dni"} id={"sysPers01Dni"} label={"Número de Documento"} onChange={handleChange} value={form.sysPers01Dni} disabled={disabledInputs}/>
             <Input type={"password"} name={"sysMedi01Pin"} id={"sysMedi01Pin"} label={"Contraseña"} onChange={handleChange} disabled={disabledInputs}/>
