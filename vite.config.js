@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [react()],
   preview: {
     port: 8080,
-    strictPort: true
+    strictPort: true,
+    allowedHosts: ["miportal.cemenurnk.org.ar"]
   },
   server: {
     port: 8080,
