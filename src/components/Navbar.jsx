@@ -22,7 +22,7 @@ const Navbar = ({title, color, backButtonPath, showMenuButton = true}) => {
 
   return (
     <>
-      <div className={`absolute min-w-full py-2 bg-${color} z-20`}>
+      <div className={`fixed min-w-full py-2 bg-${color} z-20`}>
         <div className='container mx-auto px-3'>
           <div className="flex justify-between items-center">
             {backButtonPath && storedUser && 

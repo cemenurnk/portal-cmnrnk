@@ -8,6 +8,7 @@ import StudyDetail from './pages/StudyDetail'
 import SessionContextProvider from './context/SessionContext'
 import NotFound from './pages/NotFound'
 import MedicalReport from './pages/MedicalReport'
+import TermsAndConditions from './pages/TermsAndConditions'
 
 import { getApiUrl } from './helpers/api'
 import { setCoords, setToken } from './helpers/localstorage'
@@ -66,9 +67,11 @@ function App() {
           <Routes>
             <Route path='/login' element={<Login/>}/>
             <Route element={<ProtectedRoute />}>
-              <Route path='/' element={<Navigate to="/estudios" replace={true}/>}/>
-              <Route path='/estudios' element={<Studies />}/>
-              <Route path='/estudios/:sysMedi10Uuid' element={<StudyDetail />}/>
+              <Route element={<TermsAndConditions />} >
+                <Route path='/' element={<Navigate to="/estudios" replace={true}/>}/>
+                <Route path='/estudios' element={<Studies />}/>
+                <Route path='/estudios/:sysMedi10Uuid' element={<StudyDetail />}/>
+              </Route>
             </Route>
             <Route path='/compartido/estudios/:sysMedi10Uuid' element={<StudyDetail />} />
             <Route path='/informes/:sysMedi11Uuid' element={<MedicalReport />} /> 

@@ -10,7 +10,8 @@ export const setUser = ({
   sysPers01Dni, 
   sysPers01FNacimiento, 
   sysPers01Edad, 
-  sysMedi02Uuid
+  sysMedi02Uuid,
+  sysMedi01AceptaTyC
 }) => {
 
   localStorage.setItem('portal-cemenurnk-user', JSON.stringify({
@@ -19,9 +20,13 @@ export const setUser = ({
     sysPers01Dni, 
     sysPers01FNacimiento, 
     sysPers01Edad, 
-    sysMedi02Uuid
+    sysMedi02Uuid,
+    sysMedi01AceptaTyC
   }))
+}
 
+export const updateSysMedi01AceptaTyC = () =>{
+  localStorage.setItem('portal-cemenurnk-user', JSON.stringify({...getUser(), sysMedi01AceptaTyC: true}))
 }
 
 export const getUser = () => (JSON.parse(localStorage.getItem('portal-cemenurnk-user')))
